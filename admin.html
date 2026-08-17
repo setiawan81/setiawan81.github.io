@@ -1,0 +1,1497 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YS Blog Admin - Editor Visual</title>
+  
+  <!-- Font Premium -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Georgia&display=swap" rel="stylesheet">
+  
+  <!-- Quill Editor CSS -->
+  <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+  <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+  
+  <style>
+    :root {
+      /* Palette gelap terinspirasi style.css blog */
+      --bg: #101713;
+      --surface: #18221d;
+      --surface-light: #202e27;
+      --text: #edf5f0;
+      --muted: #9aaba2;
+      --line: #2b3932;
+      --accent: #61d6a7;
+      --accent-hover: #4ec294;
+      --accent-alpha: rgba(97, 214, 167, 0.1);
+      --danger: #ff6b6b;
+      --shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      --radius: 12px;
+      --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+
+    body.light {
+      --bg: #f7f7f3;
+      --surface: #ffffff;
+      --surface-light: #eef2ef;
+      --text: #13221c;
+      --muted: #65726c;
+      --line: #dfe5e0;
+      --accent: #136f52;
+      --accent-hover: #0d543e;
+      --accent-alpha: rgba(19, 111, 82, 0.1);
+      --danger: #d94141;
+      --shadow: 0 10px 30px rgba(19, 34, 28, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg);
+      color: var(--text);
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    /* Layout Utama */
+    .sidebar {
+      width: 320px;
+      background-color: var(--surface);
+      border-right: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+
+    .main-content {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background-color: var(--bg);
+    }
+
+    /* Sidebar Styles */
+    .sidebar-header {
+      padding: 20px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 18px;
+    }
+
+    .brand span {
+      display: grid;
+      place-items: center;
+      width: 32px;
+      height: 32px;
+      background: var(--text);
+      color: var(--bg);
+      border-radius: 50%;
+      font-size: 11px;
+      font-weight: bold;
+    }
+
+    .btn-connect {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px;
+      background-color: var(--accent-alpha);
+      color: var(--accent);
+      border: 1px dashed var(--accent);
+      border-radius: var(--radius);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 14px;
+    }
+
+    .btn-connect:hover {
+      background-color: var(--accent);
+      color: #fff;
+    }
+
+    .posts-search {
+      padding: 10px 20px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background-color: var(--surface-light);
+      color: var(--text);
+      font-size: 14px;
+      outline: none;
+    }
+
+    .posts-list {
+      flex-grow: 1;
+      overflow-y: auto;
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .post-item {
+      padding: 12px 15px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background-color: var(--surface-light);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .post-item:hover, .post-item.active {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow);
+    }
+
+    .post-item.active {
+      background-color: var(--accent-alpha);
+    }
+
+    .post-item h4 {
+      font-size: 14px;
+      margin-bottom: 5px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .post-item-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .sidebar-footer {
+      padding: 15px 20px;
+      border-top: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    /* Main Content Topbar */
+    .topbar {
+      height: 72px;
+      padding: 0 30px;
+      border-bottom: 1px solid var(--line);
+      background-color: var(--surface);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .topbar-title {
+      font-weight: 700;
+      font-size: 20px;
+      color: var(--text);
+    }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn {
+      padding: 10px 18px;
+      border-radius: 999px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      font-size: 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background-color: var(--accent);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background-color: var(--accent-hover);
+    }
+
+    .btn-secondary {
+      background-color: var(--surface-light);
+      color: var(--text);
+      border: 1px solid var(--line);
+    }
+
+    .btn-secondary:hover {
+      background-color: var(--line);
+    }
+
+    .btn-danger {
+      background-color: transparent;
+      color: var(--danger);
+      border: 1px solid var(--danger);
+    }
+
+    .btn-danger:hover {
+      background-color: var(--danger);
+      color: #fff;
+    }
+
+    /* Workspace & Forms */
+    .workspace {
+      flex-grow: 1;
+      overflow-y: auto;
+      padding: 30px;
+      display: flex;
+      flex-direction: column;
+      gap: 25px;
+    }
+
+    .welcome-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      text-align: center;
+      padding: 40px;
+    }
+
+    .welcome-icon {
+      font-size: 64px;
+      margin-bottom: 20px;
+    }
+
+    .welcome-screen h2 {
+      font-family: Georgia, serif;
+      font-size: 28px;
+      margin-bottom: 12px;
+    }
+
+    .welcome-screen p {
+      color: var(--muted);
+      max-width: 500px;
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+      background-color: var(--surface);
+      padding: 24px;
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .form-group.full-width {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    input, textarea, select {
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--accent);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 70px;
+    }
+
+    /* Editor Wrapper & Quill Custom Dark Theme */
+    .editor-wrapper {
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+      min-height: 450px;
+      background-color: var(--surface);
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid var(--line);
+    }
+
+    .ql-toolbar.ql-snow {
+      background-color: var(--surface-light) !important;
+      border: none !important;
+      border-bottom: 1px solid var(--line) !important;
+      padding: 12px 20px !important;
+    }
+
+    .ql-container.ql-snow {
+      border: none !important;
+      font-family: Georgia, serif !important;
+      font-size: 18px !important;
+      color: var(--text) !important;
+      line-height: 1.8 !important;
+    }
+
+    .ql-editor {
+      padding: 30px 40px !important;
+      min-height: 380px;
+    }
+
+    .ql-editor.ql-blank::before {
+      color: var(--muted) !important;
+      font-style: italic;
+      left: 40px !important;
+    }
+
+    /* Style override untuk icon toolbar Quill di dark mode */
+    .ql-snow .ql-stroke {
+      stroke: var(--text) !important;
+    }
+    .ql-snow .ql-fill {
+      fill: var(--text) !important;
+    }
+    .ql-snow .ql-picker {
+      color: var(--text) !important;
+    }
+    .ql-snow .ql-picker-options {
+      background-color: var(--surface-light) !important;
+      border-color: var(--line) !important;
+    }
+    .ql-snow .ql-picker-item {
+      color: var(--text) !important;
+    }
+
+    /* Toast Notification */
+    .toast-container {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 1000;
+    }
+
+    .toast {
+      padding: 14px 24px;
+      border-radius: var(--radius);
+      background-color: var(--surface-light);
+      color: var(--text);
+      box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+      border-left: 5px solid var(--accent);
+      font-weight: 600;
+      font-size: 14px;
+      transform: translateY(50px);
+      opacity: 0;
+      animation: slideUp 0.3s forwards;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .toast.error {
+      border-left-color: var(--danger);
+    }
+
+    .toast.warning {
+      border-left-color: #f4c96b;
+    }
+
+    @keyframes slideUp {
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    /* Banner status mode */
+    .mode-banner {
+      padding: 10px 20px;
+      background-color: #f4c96b20;
+      border-bottom: 1px solid #f4c96b;
+      color: #f4c96b;
+      font-size: 13px;
+      font-weight: 500;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .mode-badge {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+    
+    .mode-badge.connected {
+      background-color: var(--accent-alpha);
+      color: var(--accent);
+    }
+
+    .mode-badge.manual {
+      background-color: rgba(244, 201, 107, 0.15);
+      color: #f4c96b;
+    }
+
+    /* Modal untuk manual download */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+    }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 30px;
+      width: min(500px, 90vw);
+      box-shadow: var(--shadow);
+    }
+
+    .modal h3 {
+      font-family: Georgia, serif;
+      font-size: 22px;
+      margin-bottom: 15px;
+    }
+
+    .modal p {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    .copy-area {
+      position: relative;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 15px;
+      font-family: monospace;
+      font-size: 12px;
+      max-height: 200px;
+      overflow-y: auto;
+      margin-bottom: 20px;
+      white-space: pre-wrap;
+    }
+
+    .btn-copy {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      padding: 4px 8px;
+      font-size: 11px;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    /* Theme toggle */
+    .btn-theme {
+      background: none;
+      border: 1px solid var(--line);
+      color: var(--text);
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      transition: all 0.2s;
+    }
+
+    .btn-theme:hover {
+      background: var(--surface-light);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="brand">
+        <span>YS</span> Yogi Setiawan Admin
+      </div>
+      <button class="btn-connect" id="btnConnectFolder">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+        Pilih Folder Blog
+      </button>
+    </div>
+    
+    <div class="posts-search">
+      <input type="text" class="search-input" id="searchPosts" placeholder="Cari postingan...">
+    </div>
+    
+    <div class="posts-list" id="postsListContainer">
+      <!-- List postingan akan dimuat di sini -->
+      <div style="text-align:center; color:var(--muted); padding-top:20px; font-size:14px;">
+        Belum ada folder terhubung
+      </div>
+    </div>
+    
+    <div class="sidebar-footer">
+      <button class="btn btn-secondary" id="btnNewPost" style="width: 100%; justify-content: center;" disabled>
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+        Artikel Baru
+      </button>
+      <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--muted);">
+        <span>Mode: <span id="statusMode" class="mode-badge manual">Manual</span></span>
+        <button class="btn-theme" id="btnThemeToggle" title="Ganti Tema">◐</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Banner jika berjalan di file:// protocol -->
+    <div class="mode-banner" id="protocolBanner" style="display:none;">
+      <span>⚠️ <strong>Mode Manual Teraktifkan:</strong> File dibuka langsung (`file://`). Untuk menggunakan penyimpanan sekali klik dan deteksi folder otomatis, jalankan server lokal: <code>python -m http.server 8000</code> lalu buka <code>localhost:8000/admin.html</code>.</span>
+    </div>
+
+    <!-- Topbar -->
+    <div class="topbar">
+      <div class="topbar-title" id="activePostTitle">Pilih atau Buat Postingan</div>
+      <div class="topbar-actions">
+        <button class="btn btn-danger" id="btnDeletePost" style="display:none;">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+          Hapus
+        </button>
+        <button class="btn btn-primary" id="btnSavePost" disabled>
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+          Simpan Postingan
+        </button>
+      </div>
+    </div>
+
+    <!-- Workspace -->
+    <div class="workspace" id="editorWorkspace">
+      <!-- Layar Selamat Datang -->
+      <div class="welcome-screen" id="welcomeScreen">
+        <div class="welcome-icon">📝</div>
+        <h2>Selamat Datang di Editor Blog Yogi Setiawan</h2>
+        <p>Hubungkan folder blog lokal Anda menggunakan tombol "Pilih Folder Blog" di sidebar kiri. Jika Anda menggunakan mode manual, Anda juga bisa langsung mengunggah file postingan Anda di bawah ini untuk diedit.</p>
+        <div style="display:flex; gap:10px;">
+          <button class="btn btn-primary" id="btnWelcomeConnect">Hubungkan Folder</button>
+          <button class="btn btn-secondary" id="btnUploadManual">Pilih File HTML Postingan</button>
+          <input type="file" id="manualFileInput" accept=".html" style="display:none;">
+        </div>
+      </div>
+
+      <!-- Area Pengeditan Form & Quill -->
+      <div id="editingArea" style="display:none; flex-direction:column; gap:25px; height:100%;">
+        <!-- Grid fields -->
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="postTitle">Judul Artikel</label>
+            <input type="text" id="postTitle" placeholder="Belajar Konsisten Tanpa Harus Sempurna">
+          </div>
+          
+          <div class="form-group">
+            <label for="postSlug">Slug / Nama File</label>
+            <input type="text" id="postSlug" placeholder="belajar-konsisten">
+          </div>
+
+          <div class="form-group">
+            <label for="postCategory">Kategori Artikel</label>
+            <input type="text" id="postCategory" placeholder="TIPS BELAJAR">
+          </div>
+
+          <div class="form-group">
+            <label for="postReadTime">Waktu Baca</label>
+            <input type="text" id="postReadTime" placeholder="4 MENIT">
+          </div>
+
+          <div class="form-group">
+            <label for="postCardLabel">Label Thumbnail Kartu</label>
+            <input type="text" id="postCardLabel" placeholder="Proses">
+          </div>
+
+          <div class="form-group">
+            <label for="postCardColor">Warna Thumbnail</label>
+            <select id="postCardColor">
+              <option value="blue">Biru (Blue)</option>
+              <option value="amber">Kuning (Amber)</option>
+              <option value="violet">Ungu (Violet)</option>
+              <option value="rose">Merah Muda (Rose)</option>
+              <option value="emerald">Hijau (Emerald)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="postDate">Tanggal Publikasi</label>
+            <input type="date" id="postDate">
+          </div>
+
+          <div class="form-group full-width">
+            <label for="postDesc">Meta Deskripsi (Untuk Halaman Utama & SEO)</label>
+            <textarea id="postDesc" placeholder="Tips menjaga ritme belajar coding dan menghadapi tantangan sebagai mahasiswa Informatika."></textarea>
+          </div>
+        </div>
+
+        <!-- Editor Quill -->
+        <div class="editor-wrapper">
+          <div id="quillEditor"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal Manual Download & Copy -->
+  <div class="modal-overlay" id="manualSaveModal">
+    <div class="modal">
+      <h3 id="modalTitle">Unduh Postingan Anda</h3>
+      <p>Karena Anda membuka admin ini dalam <strong>Mode Manual</strong>, Anda harus mengunduh file postingan secara manual dan menyimpannya di folder proyek Anda.</p>
+      
+      <div style="margin-bottom:15px;">
+        <strong style="font-size:13px; display:block; margin-bottom:5px;">Langkah 1: Simpan File Postingan</strong>
+        <p style="font-size:13px; margin-bottom:10px;">Unduh file di bawah ini lalu letakkan di folder: <code>posts/[nama-file].html</code></p>
+        <button class="btn btn-primary" id="btnDownloadPostFile" style="width:100%; justify-content:center;">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          Unduh File Postingan (.html)
+        </button>
+      </div>
+      
+      <div style="margin-bottom:20px;">
+        <strong style="font-size:13px; display:block; margin-bottom:5px;">Langkah 2: Perbarui Daftar di index.html</strong>
+        <p style="font-size:13px; margin-bottom:10px;">Salin kode HTML kartu berikut lalu tempelkan di file <code>index.html</code> Anda di bagian dalam tag <code>&lt;div class="posts"&gt;</code>:</p>
+        <div class="copy-area" id="copyCardCode">
+          <!-- Kode kartu disisipkan di sini -->
+          <button class="btn btn-secondary btn-copy" id="btnCopyCard">Salin</button>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-secondary" id="btnCloseModal">Tutup</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Script Logika Editor -->
+  <script>
+    // Global States
+    let dirHandle = null;
+    let postsList = [];
+    let activePost = null; // null jika buat baru, atau post object jika edit
+    let isNewPost = false;
+    let quill = null;
+
+    // DOM Elements
+    const btnConnectFolder = document.getElementById('btnConnectFolder');
+    const btnWelcomeConnect = document.getElementById('btnWelcomeConnect');
+    const btnUploadManual = document.getElementById('btnUploadManual');
+    const manualFileInput = document.getElementById('manualFileInput');
+    const searchPosts = document.getElementById('searchPosts');
+    const postsListContainer = document.getElementById('postsListContainer');
+    const btnNewPost = document.getElementById('btnNewPost');
+    const btnThemeToggle = document.getElementById('btnThemeToggle');
+    const statusMode = document.getElementById('statusMode');
+    const protocolBanner = document.getElementById('protocolBanner');
+    
+    const activePostTitle = document.getElementById('activePostTitle');
+    const btnDeletePost = document.getElementById('btnDeletePost');
+    const btnSavePost = document.getElementById('btnSavePost');
+    
+    const editorWorkspace = document.getElementById('editorWorkspace');
+    const welcomeScreen = document.getElementById('welcomeScreen');
+    const editingArea = document.getElementById('editingArea');
+    
+    // Form Inputs
+    const postTitle = document.getElementById('postTitle');
+    const postSlug = document.getElementById('postSlug');
+    const postCategory = document.getElementById('postCategory');
+    const postReadTime = document.getElementById('postReadTime');
+    const postCardLabel = document.getElementById('postCardLabel');
+    const postCardColor = document.getElementById('postCardColor');
+    const postDate = document.getElementById('postDate');
+    const postDesc = document.getElementById('postDesc');
+
+    // Modal elements
+    const manualSaveModal = document.getElementById('manualSaveModal');
+    const btnDownloadPostFile = document.getElementById('btnDownloadPostFile');
+    const copyCardCode = document.getElementById('copyCardCode');
+    const btnCopyCard = document.getElementById('btnCopyCard');
+    const btnCloseModal = document.getElementById('btnCloseModal');
+
+    // 1. Inisialisasi Halaman
+    window.addEventListener('DOMContentLoaded', () => {
+      // Periksa tema yang disimpan
+      const savedTheme = localStorage.getItem('admin-theme') || 'dark';
+      if (savedTheme === 'light') {
+        document.body.classList.add('light');
+      }
+
+      // Deteksi protokol file://
+      if (window.location.protocol === 'file:') {
+        protocolBanner.style.display = 'flex';
+        statusMode.innerText = 'Manual';
+        statusMode.className = 'mode-badge manual';
+      } else {
+        statusMode.innerText = 'Lokal';
+        statusMode.className = 'mode-badge connected';
+      }
+
+      // Inisialisasi Quill
+      quill = new Quill('#quillEditor', {
+        theme: 'snow',
+        placeholder: 'Tulis isi konten artikel blog Anda di sini...',
+        modules: {
+          toolbar: {
+            container: [
+              [{ 'header': [1, 2, 3, false] }],
+              ['bold', 'italic', 'underline', 'blockquote'],
+              [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+              ['image', 'link', 'clean']
+            ],
+            handlers: {
+              image: imageHandler
+            }
+          }
+        }
+      });
+      
+      // Default tanggal hari ini
+      const today = new Date().toISOString().split('T')[0];
+      postDate.value = today;
+    });
+
+    // Toggle Tema
+    btnThemeToggle.addEventListener('click', () => {
+      document.body.classList.toggle('light');
+      const isLight = document.body.classList.contains('light');
+      localStorage.setItem('admin-theme', isLight ? 'light' : 'dark');
+    });
+
+    // Penanganan Event Sidebar & Folder
+    btnConnectFolder.addEventListener('click', connectFolder);
+    btnWelcomeConnect.addEventListener('click', connectFolder);
+    
+    btnUploadManual.addEventListener('click', () => manualFileInput.click());
+    manualFileInput.addEventListener('change', uploadManualFile);
+
+    btnNewPost.addEventListener('click', createNewPost);
+    btnSavePost.addEventListener('click', savePost);
+    btnDeletePost.addEventListener('click', deletePost);
+
+    searchPosts.addEventListener('input', renderPostsList);
+
+    // Auto-generate slug dari judul
+    postTitle.addEventListener('input', () => {
+      if (isNewPost) {
+        postSlug.value = slugify(postTitle.value);
+      }
+    });
+
+    // Menghubungkan Folder Lokal
+    async function connectFolder() {
+      if (window.location.protocol === 'file:') {
+        showToast('File Access API tidak didukung pada protokol file://. Silakan jalankan server lokal!', 'error');
+        return;
+      }
+
+      try {
+        dirHandle = await window.showDirectoryPicker();
+        showToast('Berhasil menghubungkan folder blog!', 'success');
+        
+        btnConnectFolder.innerHTML = `<svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg> Folder Terhubung`;
+        btnConnectFolder.style.backgroundColor = 'var(--accent)';
+        btnConnectFolder.style.color = '#fff';
+        btnConnectFolder.style.border = 'none';
+
+        btnNewPost.disabled = false;
+        btnSavePost.disabled = false;
+        
+        statusMode.innerText = 'Folder';
+        statusMode.className = 'mode-badge connected';
+
+        // Pindai folder posts
+        await scanPosts();
+        
+      } catch (err) {
+        console.error(err);
+        showToast('Gagal menghubungkan folder: ' + err.message, 'error');
+      }
+    }
+
+    // Pindai Artikel dari Folder
+    async function scanPosts() {
+      if (!dirHandle) return;
+      postsList = [];
+      postsListContainer.innerHTML = '<div style="text-align:center; color:var(--muted); padding-top:20px;">Memindai postingan...</div>';
+      
+      try {
+        const postsDir = await dirHandle.getDirectoryHandle('posts');
+        for await (const entry of postsDir.values()) {
+          if (entry.kind === 'file' && entry.name.endsWith('.html')) {
+            const file = await entry.getFile();
+            const text = await file.text();
+            
+            const postObj = parsePostHTML(entry.name, text);
+            postObj.fileHandle = entry;
+            postsList.push(postObj);
+          }
+        }
+
+        // Urutkan berdasarkan tanggal terbaru
+        postsList.sort((a, b) => new Date(b.publishDate) - new Date(a.publishDate));
+        renderPostsList();
+
+      } catch (err) {
+        console.error(err);
+        showToast('Gagal membaca folder posts/: ' + err.message, 'error');
+        postsListContainer.innerHTML = '<div style="text-align:center; color:var(--danger); padding-top:20px;">Gagal memindai folder posts/</div>';
+      }
+    }
+
+    // Render daftar artikel di sidebar
+    function renderPostsList() {
+      const query = searchPosts.value.toLowerCase();
+      postsListContainer.innerHTML = '';
+
+      const filtered = postsList.filter(p => 
+        p.title.toLowerCase().includes(query) || 
+        p.filename.toLowerCase().includes(query)
+      );
+
+      if (filtered.length === 0) {
+        postsListContainer.innerHTML = '<div style="text-align:center; color:var(--muted); padding-top:20px; font-size:14px;">Tidak ada artikel ditemukan</div>';
+        return;
+      }
+
+      filtered.forEach(post => {
+        const div = document.createElement('div');
+        div.className = `post-item ${activePost && activePost.filename === post.filename ? 'active' : ''}`;
+        
+        // Format tanggal
+        const dateStr = post.publishDate ? formatDate(post.publishDate) : 'No Date';
+
+        div.innerHTML = `
+          <h4>${post.title}</h4>
+          <div class="post-item-meta">
+            <span>${post.category}</span>
+            <span>${dateStr}</span>
+          </div>
+        `;
+        
+        div.addEventListener('click', () => loadPost(post));
+        postsListContainer.appendChild(div);
+      });
+    }
+
+    // Parsing HTML postingan
+    function parsePostHTML(filename, htmlText) {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(htmlText, 'text/html');
+
+      const title = doc.querySelector('title')?.innerText.replace(' | Yogi Setiawan', '') || filename.replace('.html', '');
+      const description = doc.querySelector('meta[name="description"]')?.getAttribute('content') || '';
+      const cardLabel = doc.querySelector('meta[name="card-label"]')?.getAttribute('content') || getCardLabelFallback(filename);
+      const cardColor = doc.querySelector('meta[name="card-color"]')?.getAttribute('content') || getCardColorFallback(filename);
+      const publishDate = doc.querySelector('meta[name="publish-date"]')?.getAttribute('content') || getPublishDateFallback(null, filename);
+
+      const eyebrowText = doc.querySelector('.eyebrow')?.innerText || 'TIPS · 5 MENIT';
+      const eyebrowParts = eyebrowText.split(' · ');
+      const category = eyebrowParts[0] || 'TIPS';
+      const readTime = eyebrowParts[1] || '5 MENIT';
+
+      const bodyDiv = doc.querySelector('.body');
+      let bodyContent = '';
+      if (bodyDiv) {
+        const bodyClone = bodyDiv.cloneNode(true);
+        const share = bodyClone.querySelector('.share-section');
+        if (share) share.remove();
+        bodyContent = bodyClone.innerHTML.trim();
+      }
+
+      return {
+        filename,
+        title,
+        description,
+        category,
+        readTime,
+        cardLabel,
+        cardColor,
+        publishDate,
+        bodyContent
+      };
+    }
+
+    // Memuat postingan ke editor
+    function loadPost(post) {
+      activePost = post;
+      isNewPost = false;
+
+      // Update UI
+      welcomeScreen.style.display = 'none';
+      editingArea.style.display = 'flex';
+      btnDeletePost.style.display = 'inline-flex';
+      btnSavePost.disabled = false;
+      
+      activePostTitle.innerText = `Edit: ${post.title}`;
+
+      // Set form values
+      postTitle.value = post.title;
+      postSlug.value = post.filename.replace('.html', '');
+      postSlug.disabled = true; // Kunci slug untuk artikel yang sudah ada
+      postCategory.value = post.category;
+      postReadTime.value = post.readTime;
+      postCardLabel.value = post.cardLabel;
+      postCardColor.value = post.cardColor;
+      postDate.value = post.publishDate || new Date().toISOString().split('T')[0];
+      postDesc.value = post.description;
+
+      // Set Quill Editor content
+      quill.clipboard.dangerouslyPasteHTML(post.bodyContent);
+
+      // Tandai item terpilih
+      renderPostsList();
+    }
+
+    // Buat Postingan Baru
+    function createNewPost() {
+      activePost = null;
+      isNewPost = true;
+
+      // Update UI
+      welcomeScreen.style.display = 'none';
+      editingArea.style.display = 'flex';
+      btnDeletePost.style.display = 'none';
+      btnSavePost.disabled = false;
+      
+      activePostTitle.innerText = 'Buat Artikel Baru';
+
+      // Reset form
+      postTitle.value = '';
+      postSlug.value = '';
+      postSlug.disabled = false;
+      postCategory.value = 'TIPS BELAJAR';
+      postReadTime.value = '5 MENIT';
+      postCardLabel.value = 'Catatan';
+      postCardColor.value = 'blue';
+      postDate.value = new Date().toISOString().split('T')[0];
+      postDesc.value = '';
+      quill.setText('');
+
+      // Hapus active highlight di sidebar
+      document.querySelectorAll('.post-item').forEach(el => el.classList.remove('active'));
+    }
+
+    // Menyisipkan Gambar
+    async function imageHandler() {
+      const input = document.createElement('input');
+      input.setAttribute('type', 'file');
+      input.setAttribute('accept', 'image/*');
+      input.click();
+
+      input.onchange = async () => {
+        const file = input.files[0];
+        if (!file) return;
+
+        showToast('Memproses gambar...', 'warning');
+
+        if (dirHandle) {
+          try {
+            // Dapatkan folder assets/images/
+            const assetsDir = await dirHandle.getDirectoryHandle('assets', { create: true });
+            const imagesDir = await assetsDir.getDirectoryHandle('images', { create: true });
+            
+            // Simpan gambar secara lokal
+            const fileHandle = await imagesDir.getFileHandle(file.name, { create: true });
+            const writable = await fileHandle.createWritable();
+            await writable.write(file);
+            await writable.close();
+
+            // Sisipkan link ke editor
+            const range = quill.getSelection();
+            const imagePath = `../assets/images/${file.name}`;
+            quill.insertEmbed(range.index, 'image', imagePath);
+            showToast(`Gambar '${file.name}' disalin ke assets/images/ & disisipkan!`, 'success');
+
+          } catch (err) {
+            console.error(err);
+            showToast('Gagal menyimpan gambar ke disk: ' + err.message, 'error');
+          }
+        } else {
+          // Mode manual: Sisipkan sebagai Base64
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const range = quill.getSelection();
+            quill.insertEmbed(range.index, 'image', e.target.result);
+            showToast('Gambar disisipkan sebagai Base64. Hubungkan folder untuk menyimpannya sebagai file!', 'warning');
+          };
+          reader.readAsDataURL(file);
+        }
+      };
+    }
+
+    // Pengunggahan manual postingan (.html)
+    function uploadManualFile(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        const text = evt.target.result;
+        const postObj = parsePostHTML(file.name, text);
+        
+        showToast('Berhasil memuat file postingan secara manual!', 'success');
+        loadPost(postObj);
+        
+        statusMode.innerText = 'Manual';
+        statusMode.className = 'mode-badge manual';
+      };
+      reader.readAsText(file);
+    }
+
+    // Aksi Simpan Postingan
+    async function savePost() {
+      const title = postTitle.value.trim();
+      let slug = postSlug.value.trim();
+      const category = postCategory.value.trim();
+      const readTime = postReadTime.value.trim();
+      const cardLabel = postCardLabel.value.trim();
+      const cardColor = postCardColor.value;
+      const date = postDate.value;
+      const desc = postDesc.value.trim();
+      const bodyContent = quill.root.innerHTML;
+
+      if (!title || !slug || !category || !readTime || !cardLabel || !desc) {
+        showToast('Harap isi semua kolom metadata terlebih dahulu!', 'error');
+        return;
+      }
+
+      // Pastikan slug berakhiran .html
+      if (!slug.endsWith('.html')) {
+        slug = slug + '.html';
+      }
+
+      // Generate HTML Konten Lengkap
+      const fullHtml = generateFullHTML({
+        title,
+        description: desc,
+        cardLabel,
+        cardColor,
+        publishDate: date,
+        category,
+        readTime,
+        bodyContent
+      });
+
+      if (dirHandle) {
+        // Mode Terhubung Folder (Otomatis)
+        try {
+          // 1. Tulis file postingan
+          const postsDir = await dirHandle.getDirectoryHandle('posts', { create: true });
+          const postFileHandle = await postsDir.getFileHandle(slug, { create: true });
+          const writable = await postFileHandle.createWritable();
+          await writable.write(fullHtml);
+          await writable.close();
+
+          showToast(`Berhasil menyimpan file posts/${slug}!`, 'success');
+
+          // 2. Perbarui index.html
+          await updateIndexHtmlAuto(slug, {
+            title,
+            description: desc,
+            category,
+            readTime,
+            cardLabel,
+            cardColor,
+            publishDate: date,
+            filename: slug
+          });
+
+          // 3. Pindai ulang folder untuk me-refresh list
+          await scanPosts();
+
+          // Cari postingan yang baru disimpan dan load ulang
+          const found = postsList.find(p => p.filename === slug);
+          if (found) loadPost(found);
+
+        } catch (err) {
+          console.error(err);
+          showToast('Gagal menyimpan otomatis: ' + err.message, 'error');
+        }
+      } else {
+        // Mode Manual (Menampilkan Modal Download)
+        showManualSaveModal(slug, fullHtml, {
+          title,
+          description: desc,
+          category,
+          readTime,
+          cardLabel,
+          cardColor,
+          filename: slug
+        });
+      }
+    }
+
+    // Auto-update index.html
+    async function updateIndexHtmlAuto(savedSlug, newPostMeta) {
+      try {
+        const indexHandle = await dirHandle.getFileHandle('index.html');
+        const indexFile = await indexHandle.getFile();
+        const indexText = await indexFile.text();
+
+        const parser = new DOMParser();
+        const indexDoc = parser.parseFromString(indexText, 'text/html');
+        const postsContainer = indexDoc.querySelector('.posts');
+
+        if (!postsContainer) {
+          showToast('Kontainer ".posts" di index.html tidak ditemukan!', 'error');
+          return;
+        }
+
+        // Pindai semua postingan yang ada sekarang
+        let tempPosts = [];
+        const postsDir = await dirHandle.getDirectoryHandle('posts');
+        for await (const entry of postsDir.values()) {
+          if (entry.kind === 'file' && entry.name.endsWith('.html')) {
+            const file = await entry.getFile();
+            const text = await file.text();
+            
+            // Jika filenya adalah file yang baru kita simpan, gunakan meta terbaru
+            if (entry.name === savedSlug) {
+              tempPosts.push(newPostMeta);
+            } else {
+              const parsed = parsePostHTML(entry.name, text);
+              parsed.filename = entry.name;
+              tempPosts.push(parsed);
+            }
+          }
+        }
+
+        // Jika artikel baru belum terdeteksi (karena penundaan file system), tambahkan manual
+        if (!tempPosts.some(p => p.filename === savedSlug)) {
+          tempPosts.push(newPostMeta);
+        }
+
+        // Urutkan postingan berdasarkan tanggal publikasi descending
+        tempPosts.sort((a, b) => new Date(b.publishDate) - new Date(a.publishDate));
+
+        // Buat HTML kartu artikel
+        let cardsHTML = '';
+        tempPosts.forEach((post, idx) => {
+          const isFeatured = idx === 0;
+          const featuredClass = isFeatured ? ' featured' : '';
+          
+          cardsHTML += `\n          <article class="post${featuredClass}">
+            <div class="thumb ${post.cardColor}"><span>${post.cardLabel}</span></div>
+            <div>
+              <small>${post.category.toUpperCase()} · ${post.readTime.toUpperCase()}</small>
+              <h3>${post.title}</h3>
+              <p>${post.description}</p>
+              <a href="posts/${post.filename}">Baca artikel →</a>
+            </div>
+          </article>`;
+        });
+        cardsHTML += '\n        ';
+
+        postsContainer.innerHTML = cardsHTML;
+
+        // Serialize kembali dan simpan
+        const updatedIndexText = '<!doctype html>\n' + indexDoc.documentElement.outerHTML;
+        const writable = await indexHandle.createWritable();
+        await writable.write(updatedIndexText);
+        await writable.close();
+
+        showToast('Halaman depan (index.html) berhasil diperbarui otomatis!', 'success');
+
+      } catch (err) {
+        console.error(err);
+        showToast('Gagal memperbarui index.html otomatis: ' + err.message, 'error');
+      }
+    }
+
+    // Aksi Hapus Postingan
+    async function deletePost() {
+      if (!activePost) return;
+      
+      const confirmDelete = confirm(`Apakah Anda yakin ingin menghapus postingan "${activePost.title}"?\nFile posts/${activePost.filename} akan dihapus secara fisik dari disk.`);
+      if (!confirmDelete) return;
+
+      if (dirHandle) {
+        try {
+          const postsDir = await dirHandle.getDirectoryHandle('posts');
+          await postsDir.removeEntry(activePost.filename);
+          showToast(`File posts/${activePost.filename} berhasil dihapus!`, 'success');
+
+          // Perbarui index.html (tapi hapus postingan aktif ini dari list)
+          await removePostFromIndexHtml(activePost.filename);
+
+          // Reset editor dan scan ulang
+          activePost = null;
+          welcomeScreen.style.display = 'flex';
+          editingArea.style.display = 'none';
+          
+          await scanPosts();
+
+        } catch (err) {
+          console.error(err);
+          showToast('Gagal menghapus file: ' + err.message, 'error');
+        }
+      } else {
+        showToast('Menghapus postingan tidak didukung di Mode Manual. Hapus file Anda secara manual di komputer.', 'error');
+      }
+    }
+
+    // Menghapus item dari index.html saat penghapusan
+    async function removePostFromIndexHtml(slugToRemove) {
+      try {
+        const indexHandle = await dirHandle.getFileHandle('index.html');
+        const indexFile = await indexHandle.getFile();
+        const indexText = await indexFile.text();
+
+        const parser = new DOMParser();
+        const indexDoc = parser.parseFromString(indexText, 'text/html');
+        const postsContainer = indexDoc.querySelector('.posts');
+
+        if (!postsContainer) return;
+
+        // Pindai semua file kecuali yang dihapus
+        let tempPosts = [];
+        const postsDir = await dirHandle.getDirectoryHandle('posts');
+        for await (const entry of postsDir.values()) {
+          if (entry.kind === 'file' && entry.name.endsWith('.html') && entry.name !== slugToRemove) {
+            const file = await entry.getFile();
+            const text = await file.text();
+            const parsed = parsePostHTML(entry.name, text);
+            parsed.filename = entry.name;
+            tempPosts.push(parsed);
+          }
+        }
+
+        // Urutkan
+        tempPosts.sort((a, b) => new Date(b.publishDate) - new Date(a.publishDate));
+
+        // Buat HTML
+        let cardsHTML = '';
+        tempPosts.forEach((post, idx) => {
+          const isFeatured = idx === 0;
+          const featuredClass = isFeatured ? ' featured' : '';
+          
+          cardsHTML += `\n          <article class="post${featuredClass}">
+            <div class="thumb ${post.cardColor}"><span>${post.cardLabel}</span></div>
+            <div>
+              <small>${post.category.toUpperCase()} · ${post.readTime.toUpperCase()}</small>
+              <h3>${post.title}</h3>
+              <p>${post.description}</p>
+              <a href="posts/${post.filename}">Baca artikel →</a>
+            </div>
+          </article>`;
+        });
+        cardsHTML += '\n        ';
+
+        postsContainer.innerHTML = cardsHTML;
+
+        const updatedIndexText = '<!doctype html>\n' + indexDoc.documentElement.outerHTML;
+        const writable = await indexHandle.createWritable();
+        await writable.write(updatedIndexText);
+        await writable.close();
+
+        showToast('Daftar di index.html berhasil diperbarui!', 'success');
+
+      } catch (err) {
+        console.error(err);
+        showToast('Gagal memperbarui index.html setelah hapus: ' + err.message, 'error');
+      }
+    }
+
+    // Tampilkan Modal Simpan Manual (Download & Salin)
+    function showManualSaveModal(slug, htmlContent, meta) {
+      manualSaveModal.style.display = 'flex';
+      
+      // Tombol download file
+      btnDownloadPostFile.onclick = () => {
+        const blob = new Blob([htmlContent], { type: 'text/html' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = slug;
+        a.click();
+        showToast('File artikel diunduh!', 'success');
+      };
+
+      // Teks kartu HTML untuk disalin
+      const cardHtml = `<article class="post">
+  <div class="thumb ${meta.cardColor}"><span>${meta.cardLabel}</span></div>
+  <div>
+    <small>${meta.category.toUpperCase()} · ${meta.readTime.toUpperCase()}</small>
+    <h3>${meta.title}</h3>
+    <p>${meta.description}</p>
+    <a href="posts/${meta.filename}">Baca artikel →</a>
+  </div>
+</article>`;
+
+      copyCardCode.innerHTML = `<button class="btn btn-secondary btn-copy" id="btnCopyCard">Salin</button>${escapeHtml(cardHtml)}`;
+
+      // Event listener salin kode
+      document.getElementById('btnCopyCard').onclick = () => {
+        navigator.clipboard.writeText(cardHtml);
+        showToast('Kode kartu berhasil disalin!', 'success');
+      };
+    }
+
+    // Tutup Modal
+    btnCloseModal.addEventListener('click', () => {
+      manualSaveModal.style.display = 'none';
+    });
+
+    // Helper: Escape HTML string untuk tampilan
+    function escapeHtml(text) {
+      return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    // Helper: Formatter Tanggal Bahasa Indonesia
+    function formatDate(dateStr) {
+      const parts = dateStr.split('-');
+      if (parts.length !== 3) return dateStr;
+      
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+      const day = parseInt(parts[2]);
+      const monthIndex = parseInt(parts[1]) - 1;
+      const year = parts[0];
+      
+      return `${day} ${months[monthIndex]} ${year}`;
+    }
+
+    // Helper: Slugify Judul
+    function slugify(text) {
+      return text.toString().toLowerCase()
+        .replace(/\s+/g, '-')           // Ganti spasi dengan -
+        .replace(/[^\w\-]+/g, '')       // Hapus semua karakter non-word
+        .replace(/\-\-+/g, '-')         // Ganti beberapa - dengan satu -
+        .replace(/^-+/, '')             // Potong - di depan
+        .replace(/-+$/, '');            // Potong - di belakang
+    }
+
+    // Helper: Toast Notification
+    function showToast(message, type = 'success') {
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      
+      let icon = '✔️';
+      if (type === 'error') icon = '❌';
+      if (type === 'warning') icon = '⚠️';
+
+      toast.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
+      toast.onclick = () => toast.remove();
+
+      toastContainer.appendChild(toast);
+
+      // Hilangkan otomatis dalam 4 detik
+      setTimeout(() => {
+        toast.style.animation = 'slideUp 0.3s reverse';
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+
+    // Helper Fallbacks untuk existing files
+    function getCardLabelFallback(filename) {
+      if (filename === 'belajar-konsisten.html') return 'Proses';
+      if (filename === 'mencatat-ide.html') return 'Ide';
+      if (filename === 'memulai-blog.html') return 'Catatan';
+      return 'Artikel';
+    }
+
+    function getCardColorFallback(filename) {
+      if (filename === 'belajar-konsisten.html') return 'amber';
+      if (filename === 'mencatat-ide.html') return 'violet';
+      if (filename === 'memulai-blog.html') return 'blue';
+      return 'emerald';
+    }
+
+    function getPublishDateFallback(lastModified, filename) {
+      if (filename === 'memulai-blog.html') return '2026-08-15';
+      if (filename === 'belajar-konsisten.html') return '2026-08-16';
+      if (filename === 'mencatat-ide.html') return '2026-08-17';
+      
+      const d = new Date(lastModified || Date.now());
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    // Helper: Template Generator HTML artikel lengkap
+    function generateFullHTML(data) {
+      return `<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${data.title} | Yogi Setiawan</title><meta name="description" content="${data.description}"><meta name="card-label" content="${data.cardLabel}"><meta name="card-color" content="${data.cardColor}"><meta name="publish-date" content="${data.publishDate}"><link rel="icon" href="../assets/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="../assets/style.css"><style>.article{max-width:760px;padding:80px 0}.article h1{font:clamp(40px,6vw,68px)/1.08 Georgia;margin:18px 0}.article .body{font-size:18px;line-height:1.8}.back{font-weight:800;color:var(--accent);text-decoration:none}.article blockquote{margin:30px 0;padding:20px 25px;border-left:4px solid var(--accent);background:var(--surface);border-radius:0 12px 12px 0}.article ul{padding-left:20px}.article li{margin-bottom:10px}</style></head>
+<body>
+<div class="progress-bar"></div>
+<main class="article wrap"><a class="back" href="../index.html">← Kembali</a>
+<p class="eyebrow" style="margin-top:55px">${data.category.toUpperCase()} · ${data.readTime.toUpperCase()}</p>
+<h1>${data.title}</h1>
+<div class="body">
+${data.bodyContent}
+
+<div class="share-section"><h3>Bagikan artikel ini</h3><div class="share-buttons"><a class="share-btn whatsapp" href="#" target="_blank"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.47 14.38c-.3-.15-1.76-.87-2.03-.97-.28-.1-.48-.15-.68.15-.2.3-.77.97-.95 1.17-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.48-.89-.79-1.49-1.77-1.66-2.07-.18-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.03-.52-.07-.15-.68-1.63-.93-2.23-.24-.59-.49-.51-.68-.52h-.58c-.2 0-.52.07-.8.37-.27.3-1.04 1.02-1.04 2.48s1.07 2.88 1.22 3.08c.15.2 2.1 3.21 5.1 4.5.71.31 1.27.49 1.7.63.72.23 1.37.2 1.88.12.58-.09 1.76-.72 2.01-1.41.25-.7.25-1.3.17-1.42-.07-.12-.28-.2-.58-.35zm-5.44 7.44h-.02a9.87 9.87 0 0 1-5.03-1.38l-.36-.21-3.74.98 1-3.65-.24-.37A9.86 9.86 0 0 1 2.18 12a9.84 9.84 0 0 1 9.85-9.84c2.63 0 5.1 1.03 6.96 2.89a9.79 9.79 0 0 1 2.88 6.96c-.01 5.43-4.42 9.85-9.84 9.85zm8.41-18.24A11.81 11.81 0 0 0 12.05 0C5.49 0 .16 5.33.15 11.88a11.83 11.83 0 0 0 1.59 5.95L0 24l6.33-1.66a11.87 11.87 0 0 0 5.69 1.45h.01c6.56 0 11.89-5.33 11.9-11.88a11.81 11.81 0 0 0-3.49-8.4z"/></svg> WhatsApp</a><a class="share-btn twitter" href="#" target="_blank"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg> Twitter/X</a><a class="share-btn linkedin" href="#" target="_blank"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg> LinkedIn</a><button class="share-btn copy"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Salin Link</button></div></div>
+</div></main>
+<script src="../assets/script.js"><\/script>
+</body></html>`;
+    }
+  </script>
+</body>
+</html>
