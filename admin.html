@@ -1569,7 +1569,13 @@ ${data.bodyContent}
 
     // --- Git Push Event Listeners ---
     if (btnPushGitHub) {
-      btnPushGitHub.addEventListener('click', () => {
+      btnPushGitHub.addEventListener('click', async () => {
+        // Otomatis simpan postingan ke disk terlebih dahulu jika sedang mengedit
+        if (editingArea.style.display === 'flex') {
+          showToast('Menyimpan perubahan artikel ke disk...', 'warning');
+          await savePost();
+        }
+
         commitMessage.value = '';
         gitPushStatus.style.display = 'none';
         gitPushConsole.innerText = '';
