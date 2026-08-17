@@ -1094,6 +1094,56 @@
       document.querySelectorAll('.post-item').forEach(el => el.classList.remove('active'));
     }
 
+    // Helper: Kompres Gambar di Sisi Client (Konversi ke WebP & Maks Lebar 1200px)
+    function compressImageClientSide(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+          const img = new Image();
+          img.src = event.target.result;
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+
+            // Maksimal dimensi lebar 1200px untuk optimasi web
+            const MAX_WIDTH = 1200;
+            if (width > MAX_WIDTH) {
+              height = Math.round((height * MAX_WIDTH) / width);
+              width = MAX_WIDTH;
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+
+            // Kompres ke format webp dengan kualitas 80%
+            canvas.toBlob((blob) => {
+              if (blob) {
+                const baseName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+                const newFile = new File([blob], `${baseName}.webp`, {
+                  type: 'image/webp',
+                  lastModified: Date.now()
+                });
+                resolve(newFile);
+              } else {
+                resolve(file);
+              }
+            }, 'image/webp', 0.8);
+          };
+          img.onerror = (err) => {
+            reject(err);
+          };
+        };
+        reader.onerror = (err) => {
+          reject(err);
+        };
+      });
+    }
+
     // Menyisipkan Gambar
     async function imageHandler() {
       // Minta izin readwrite terlebih dahulu menggunakan active user gesture dari click toolbar
@@ -1117,10 +1167,17 @@
       input.click();
 
       input.onchange = async () => {
-        const file = input.files[0];
+        let file = input.files[0];
         if (!file) return;
 
-        showToast('Memproses gambar...', 'warning');
+        showToast('Memproses & mengompres gambar...', 'warning');
+
+        // Kompres secara lokal di sisi client
+        try {
+          file = await compressImageClientSide(file);
+        } catch (e) {
+          console.error("Gagal mengompres di client:", e);
+        }
 
         if (dirHandle) {
           try {
