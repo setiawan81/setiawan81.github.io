@@ -11,3 +11,8 @@ echo [TIPS] Jangan tutup jendela command prompt ini selama Anda sedang menulis!
 echo.
 start http://127.0.0.1:8000/admin.html
 python server.py
+if %errorlevel% neq 0 (
+    echo.
+    echo [ERROR] Server Python terhenti dengan kesalahan.
+    pause
+)

@@ -68,7 +68,14 @@ def run(server_class=HTTPServer, handler_class=CustomHandler, port=8000):
     # Ensure working directory is the folder of server.py
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     server_address = ('127.0.0.1', port)
-    httpd = server_class(server_address, handler_class)
+    try:
+        httpd = server_class(server_address, handler_class)
+    except OSError as e:
+        print(f"\n[ERROR] Gagal menjalankan server di port {port}: {e}")
+        print("Kemungkinan besar port 8000 sedang digunakan oleh aplikasi lain atau sisa server sebelumnya.")
+        print("Silakan tutup aplikasi tersebut, lalu jalankan kembali file .bat ini.")
+        input("\nTekan Enter untuk menutup jendela ini...")
+        return
     print(f"YS Blog Backend Server berjalan di http://127.0.0.1:{port}")
     print("Tekan Ctrl+C untuk menghentikan server.")
     try:

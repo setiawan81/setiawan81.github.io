@@ -1096,6 +1096,21 @@
 
     // Menyisipkan Gambar
     async function imageHandler() {
+      // Minta izin readwrite terlebih dahulu menggunakan active user gesture dari click toolbar
+      if (dirHandle) {
+        try {
+          const permStatus = await dirHandle.requestPermission({ mode: 'readwrite' });
+          if (permStatus !== 'granted') {
+            showToast('Izin akses folder ditolak. Tidak bisa menyimpan gambar!', 'error');
+            return;
+          }
+        } catch (err) {
+          console.error(err);
+          showToast('Gagal memverifikasi izin folder: ' + err.message, 'error');
+          return;
+        }
+      }
+
       const input = document.createElement('input');
       input.setAttribute('type', 'file');
       input.setAttribute('accept', 'image/*');
