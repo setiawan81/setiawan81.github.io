@@ -143,3 +143,13 @@
 pre[class*="language-"] {
   padding: 24px 20px 20px 20px !important;
 }
+
+/* === Article Images Optimization === */
+.article img, .body img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 32px auto;
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
