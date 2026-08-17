@@ -58,3 +58,125 @@ document.querySelectorAll('.share-btn.copy').forEach(btn=>{
     })
   })
 });
+
+/* === Search & Filter Articles === */
+const searchInput = document.getElementById('search-input');
+const filterBtns = document.querySelectorAll('.filter-btn');
+const postsContainer = document.querySelector('.posts');
+const postArticles = document.querySelectorAll('.posts article');
+
+if (searchInput && postsContainer && postArticles.length > 0) {
+  function filterPosts() {
+    const query = searchInput.value.toLowerCase().trim();
+    const activeBtn = document.querySelector('.filter-btn.active');
+    const selectedCategory = activeBtn ? activeBtn.getAttribute('data-category').toLowerCase() : 'all';
+
+    postArticles.forEach(article => {
+      const categoryEl = article.querySelector('small');
+      const titleEl = article.querySelector('h3');
+      const descEl = article.querySelector('p');
+
+      const categoryText = categoryEl ? categoryEl.textContent.toLowerCase().split('·')[0].trim() : '';
+      const titleText = titleEl ? titleEl.textContent.toLowerCase() : '';
+      const descText = descEl ? descEl.textContent.toLowerCase() : '';
+
+      const matchesQuery = titleText.includes(query) || descText.includes(query);
+      const matchesCategory = selectedCategory === 'all' || categoryText === selectedCategory;
+
+      if (matchesQuery && matchesCategory) {
+        article.style.display = '';
+      } else {
+        article.style.display = 'none';
+      }
+    });
+
+    let visibleCount = 0;
+    postArticles.forEach(a => { if (a.style.display !== 'none') visibleCount++; });
+
+    let noResultMsg = document.getElementById('no-posts-found');
+    if (visibleCount === 0) {
+      if (!noResultMsg) {
+        noResultMsg = document.createElement('div');
+        noResultMsg.id = 'no-posts-found';
+        noResultMsg.style.cssText = 'grid-column: 1 / -1; text-align: center; padding: 45px 20px; color: var(--muted); font-size: 15px; font-weight: 600;';
+        noResultMsg.innerHTML = '🔍 Tidak ada artikel yang cocok dengan pencarian Anda.';
+        postsContainer.appendChild(noResultMsg);
+      }
+    } else if (noResultMsg) {
+      noResultMsg.remove();
+    }
+  }
+
+  searchInput.addEventListener('input', filterPosts);
+
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      filterBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      filterPosts();
+    });
+  });
+}
+
+/* === Code Blocks & Copy Code Button === */
+const preBlocks = document.querySelectorAll('pre');
+if (preBlocks.length > 0) {
+  // Wrap Quill-specific <pre class="ql-syntax"> into <pre><code> for Prism compatibility
+  preBlocks.forEach(pre => {
+    if (!pre.querySelector('code')) {
+      const code = document.createElement('code');
+      code.className = 'language-javascript';
+      code.innerHTML = pre.innerHTML;
+      pre.innerHTML = '';
+      pre.appendChild(code);
+    }
+  });
+
+  // Load Prism JS and Tomorrow Night CSS dynamically
+  const prismCss = document.createElement('link');
+  prismCss.rel = 'stylesheet';
+  prismCss.href = 'https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css';
+  document.head.appendChild(prismCss);
+
+  const prismJs = document.createElement('script');
+  prismJs.src = 'https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js';
+  prismJs.onload = () => {
+    if (typeof Prism !== 'undefined') {
+      Prism.highlightAll();
+    }
+  };
+  document.head.appendChild(prismJs);
+
+  // Add Copy Button to all pre elements
+  preBlocks.forEach(pre => {
+    pre.style.position = 'relative';
+    
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'copy-code-btn';
+    copyBtn.innerHTML = `
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+      </svg> Copy
+    `;
+
+    copyBtn.addEventListener('click', () => {
+      const codeText = pre.querySelector('code') ? pre.querySelector('code').textContent : pre.textContent;
+      navigator.clipboard.writeText(codeText).then(() => {
+        copyBtn.innerHTML = '✓ Copied!';
+        copyBtn.classList.add('copied');
+        setTimeout(() => {
+          copyBtn.innerHTML = `
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg> Copy
+          `;
+          copyBtn.classList.remove('copied');
+        }, 2000);
+      });
+    });
+
+    pre.appendChild(copyBtn);
+  });
+}

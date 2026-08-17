@@ -560,6 +560,19 @@
     .btn-theme:hover {
       background: var(--surface-light);
     }
+
+    /* Git Push Spinner & Styles */
+    .spinner {
+      border: 2px solid var(--accent-alpha);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
   </style>
 </head>
 <body>
@@ -617,6 +630,10 @@
         <button class="btn btn-primary" id="btnSavePost" disabled>
           <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
           Simpan Postingan
+        </button>
+        <button class="btn btn-secondary" id="btnPushGitHub" style="display:none; background-color: var(--accent); color: var(--bg); border: 1px solid var(--accent);">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0;"><path d="M12 .3a12 12 0 0 0-3.8 23.38c.6.11.82-.26.82-.58v-2.02c-3.34.73-4.04-1.61-4.04-1.61a3.18 3.18 0 0 0-1.33-1.76c-1.09-.74.08-.73.08-.73a2.52 2.52 0 0 1 1.84 1.24 2.56 2.56 0 0 0 3.5 1 2.56 2.56 0 0 1 .76-1.6c-2.67-.3-5.47-1.33-5.47-5.93a4.64 4.64 0 0 1 1.24-3.22 4.3 4.3 0 0 1 .12-3.18s1-.32 3.3 1.23a11.38 11.38 0 0 1 6 0c2.3-1.55 3.3-1.23 3.3-1.23a4.3 4.3 0 0 1 .12 3.18 4.64 4.64 0 0 1 1.24 3.22c0 4.61-2.81 5.63-5.48 5.93a2.86 2.86 0 0 1 .82 2.22v3.29c0 .32.22.7.82.58A12 12 0 0 0 12 .3"/></svg>
+          Push ke GitHub
         </button>
       </div>
     </div>
@@ -724,6 +741,34 @@
     </div>
   </div>
 
+  <!-- Modal Git Push -->
+  <div class="modal-overlay" id="gitPushModal">
+    <div class="modal">
+      <h3>Push ke GitHub</h3>
+      <p>Langkah ini akan menyimpan (commit) seluruh perubahan lokal blog Anda dan langsung mengunggahnya (push) ke GitHub Pages.</p>
+      
+      <div style="margin-bottom: 20px;">
+        <label for="commitMessage" style="display:block; margin-bottom:8px; font-weight:600; font-size:13px; color:var(--muted);">Pesan Commit (Opsional)</label>
+        <input type="text" id="commitMessage" placeholder="Update postingan otomatis" style="width:100%; padding:10px 14px; border-radius:8px; border:1px solid var(--line); background:var(--bg); color:var(--text); outline:none;">
+      </div>
+      
+      <!-- Status Loading & Output Console -->
+      <div id="gitPushStatus" style="display:none; margin-bottom:20px;">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+          <div class="spinner" style="width:18px; height:18px; border:2px solid var(--accent-alpha); border-top-color:var(--accent); border-radius:50%; animation:spin 1s linear infinite;"></div>
+          <span id="gitPushStatusText" style="font-weight:600; font-size:14px;">Mengunggah ke GitHub...</span>
+        </div>
+        <pre id="gitPushConsole" style="background:#090d0b; color:#8effcf; padding:12px; border-radius:8px; font-family:monospace; font-size:11px; max-height:150px; overflow-y:auto; white-space:pre-wrap; border:1px solid var(--line);"></pre>
+      </div>
+      
+      <div class="modal-actions">
+        <button class="btn btn-secondary" id="btnCancelPush">Batal</button>
+        <button class="btn btn-primary" id="btnSubmitPush" style="background-color: var(--accent); color: var(--bg);">Mulai Push</button>
+      </div>
+    </div>
+  </div>
+
+
   <div class="toast-container" id="toastContainer"></div>
 
   <!-- Script Logika Editor -->
@@ -771,6 +816,16 @@
     const copyCardCode = document.getElementById('copyCardCode');
     const btnCopyCard = document.getElementById('btnCopyCard');
     const btnCloseModal = document.getElementById('btnCloseModal');
+
+    // Git Push DOM Elements
+    const btnPushGitHub = document.getElementById('btnPushGitHub');
+    const gitPushModal = document.getElementById('gitPushModal');
+    const commitMessage = document.getElementById('commitMessage');
+    const gitPushStatus = document.getElementById('gitPushStatus');
+    const gitPushStatusText = document.getElementById('gitPushStatusText');
+    const gitPushConsole = document.getElementById('gitPushConsole');
+    const btnCancelPush = document.getElementById('btnCancelPush');
+    const btnSubmitPush = document.getElementById('btnSubmitPush');
 
     // 1. Inisialisasi Halaman
     window.addEventListener('DOMContentLoaded', () => {
@@ -859,6 +914,10 @@
 
         btnNewPost.disabled = false;
         btnSavePost.disabled = false;
+        
+        if (window.location.protocol !== 'file:') {
+          btnPushGitHub.style.display = 'inline-flex';
+        }
         
         statusMode.innerText = 'Folder';
         statusMode.className = 'mode-badge connected';
@@ -1491,6 +1550,72 @@ ${data.bodyContent}
 </div></main>
 <script src="../assets/script.js"><\/script>
 </body></html>`;
+    }
+
+    // --- Git Push Event Listeners ---
+    if (btnPushGitHub) {
+      btnPushGitHub.addEventListener('click', () => {
+        commitMessage.value = '';
+        gitPushStatus.style.display = 'none';
+        gitPushConsole.innerText = '';
+        btnSubmitPush.disabled = false;
+        btnCancelPush.disabled = false;
+        gitPushModal.style.display = 'flex';
+      });
+    }
+
+    if (btnCancelPush) {
+      btnCancelPush.addEventListener('click', () => {
+        gitPushModal.style.display = 'none';
+      });
+    }
+
+    if (btnSubmitPush) {
+      btnSubmitPush.addEventListener('click', async () => {
+        const msg = commitMessage.value.trim();
+        
+        gitPushStatus.style.display = 'block';
+        gitPushStatusText.innerText = 'Menghubungi server backend...';
+        gitPushConsole.innerText = 'Mengirim instruksi push ke server...';
+        btnSubmitPush.disabled = true;
+        btnCancelPush.disabled = true;
+
+        try {
+          const response = await fetch('/api/git-push', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ message: msg })
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const result = await response.json();
+          
+          if (result.status === 'success') {
+            gitPushStatusText.innerText = 'Berhasil diunggah ke GitHub!';
+            gitPushConsole.innerText = result.output || 'Repository clean. No changes to push.';
+            showToast('Blog berhasil di-push ke GitHub!', 'success');
+            btnCancelPush.disabled = false;
+          } else {
+            gitPushStatusText.innerText = 'Gagal mengunggah!';
+            gitPushConsole.innerText = `Error: ${result.message}\n\n${result.output || ''}`;
+            showToast('Gagal mengunggah ke GitHub!', 'error');
+            btnSubmitPush.disabled = false;
+            btnCancelPush.disabled = false;
+          }
+        } catch (err) {
+          console.error(err);
+          gitPushStatusText.innerText = 'Terjadi error jaringan!';
+          gitPushConsole.innerText = `Gagal menghubungi server kustom backend:\n${err.message}\n\nPastikan server Python berjalan (python server.py).`;
+          showToast('Error jaringan saat push!', 'error');
+          btnSubmitPush.disabled = false;
+          btnCancelPush.disabled = false;
+        }
+      });
     }
   </script>
 </body>
